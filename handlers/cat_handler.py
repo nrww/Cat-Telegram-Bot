@@ -33,18 +33,15 @@ async def check_cat(msg: Message, state: FSMContext, bot: Bot, album: list[Messa
         destination=img
     )
     img.seek(0)
-    chat_id = msg.chat.id
-    user_data = await state.get_data()
+    user_id = msg.from_user.id
     try:
         with Session() as session:
-
-            owner_id = session.query(Owner.id).filter(Owner.chat_id == chat_id).first()[0]
+            owner_id = session.query(Owner.id).filter(Owner.chat_id == user_id).first()[0]
 
         url = f'http://{REID_IP}:{REID_PORT}/check_cat/?owner={str(owner_id)}&debug=1'
         file = {'file': img}
         resp = requests.post(url=url, files=file) 
 
-        #print(str(resp.json()))
     except Exception as e:
         print(e)
         msg.answer('Internal error')
@@ -53,7 +50,7 @@ async def check_cat(msg: Message, state: FSMContext, bot: Bot, album: list[Messa
     await msg.answer_photo(
             BufferedInputFile(
                 resp.content,
-                filename="image from buffer.png"
+                filename="img.png"
             )
         )
 
@@ -108,10 +105,10 @@ async def add_name(msg: Message, state: FSMContext, bot: Bot, album: list[Messag
         )
         buff.seek(0)
         imgs.append(buff)
-    chat_id = msg.chat.id
+    user_id = msg.from_user.id
     user_data = await state.get_data()
     try:
-        url = f'http://{REID_IP}:{REID_PORT}/add_cat/?cat_name={user_data["name"]}&owner={str(chat_id)}'
+        url = f'http://{REID_IP}:{REID_PORT}/add_cat/?cat_name={user_data["name"]}&owner={str(user_id)}'
         files = [('files', file.getvalue()) for file in imgs]
         resp = requests.post(url=url, files=files) 
         resp = resp.json()          
